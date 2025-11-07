@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package productos;
+
+
+message Producto {
+    int32 id = 1;
+    string nombre = 2;
+    string descripcion = 3;
+    int32 cantidad = 4;
+}
+
+
+
+message CreateProductoRequest {
+    Producto producto = 1;
+}
+
+message CreateProductoResponse {
+    string respuesta = 1;
+}
+
+message GetAllProductosRequest {}
+
+message GetAllProductosResponse {
+    repeated Producto productos = 1;
+}
+
+message GetProductoByIdRequest {
+    int32 id = 1;
+}
+
+message GetProductoByIdResponse {
+    Producto producto = 1;
+}
+
+message UpdateProductoRequest {
+    Producto producto = 1;
+}
+
+message UpdateProductoResponse {
+    string respuesta = 1;
+}
+
+message DeleteProductoRequest {
+    int32 id = 1;
+}
+
+message DeleteProductoResponse {
+    string respuesta = 1;
+}
+
+service ProductosService {
+
+    rpc CreateProducto(CreateProductoRequest) returns (CreateProductoResponse);
+
+    rpc GetAllProductos(GetAllProductosRequest) returns (GetAllProductosResponse);
+
+    rpc GetProductoById(GetProductoByIdRequest) returns (GetProductoByIdResponse);
+
+    rpc UpdateProducto(UpdateProductoRequest) returns (UpdateProductoResponse);
+
+    rpc DeleteProducto(DeleteProductoRequest) returns (DeleteProductoResponse);
+}

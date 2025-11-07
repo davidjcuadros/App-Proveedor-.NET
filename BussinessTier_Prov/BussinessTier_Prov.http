@@ -1,0 +1,6 @@
+@BussinessTier_Prov_HostAddress = http://localhost:5142
+
+GET {{BussinessTier_Prov_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -3,15 +3,15 @@ version: '3.9'
 services:
   postgres-db:
     image: postgres:16
-    container_name: postgres-db
+    container_name: postgres-db2
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: TestDb
+      POSTGRES_DB: productos_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - dotnet-network
     healthcheck:
