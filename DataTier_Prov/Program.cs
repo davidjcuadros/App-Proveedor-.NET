@@ -1,4 +1,9 @@
 
+using DataTier_Prov.Repositories;
+using DataTier_Prov.Services;
+using Microsoft.EntityFrameworkCore;
+using ProveedorApp.Persistance;
+
 namespace DataTier_Prov;
 
 public class Program
@@ -6,15 +11,26 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-        // Add services to the container.
+        builder.Services.AddDbContextFactory<MyAppDbContext>(
+            options => options.UseNpgsql(connectionString)
+        );
+
+        // 2) registrar repos
+        builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
+
+        // 3) registrar gRPC SERVER
         builder.Services.AddGrpc();
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        //app.MapGrpcService<GreeterService>();
-        app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+        // 4) mapear tu servicio grpc (el real, NO el greeter)
+        app.MapGrpcService<ProductosServiceGrpcImpl>(); // <- esta clase todavía no la has creado
+
+        // opcional
+        app.MapGet("/", () => "Servidor GRPC arriba. Este endpoint no acepta REST.");
 
         app.Run();
     }

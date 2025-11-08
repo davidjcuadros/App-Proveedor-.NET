@@ -1,9 +1,9 @@
 using System;
-using ProveedorApp.Model; 
+using DataTier_Prov.Models;
 
-namespace ProveedorApp.IBusiness;
+namespace DataTier_Prov.Repositories;
 
-public interface IProductoBusiness
+public interface IProductoRepository
 {
     Task CreateProducto(Producto producto);
     Task<List<Producto>> GetAllProductos();
@@ -11,3 +11,4 @@ public interface IProductoBusiness
     Task UpdateProducto(Producto producto);
     Task DeleteProducto(int id);
 }
+

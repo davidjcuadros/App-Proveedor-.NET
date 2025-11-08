@@ -1,26 +1,23 @@
 using System;
-using ProveedorApp.Persistance;
-using ProveedorApp.IBusiness;
-using ProveedorApp.Model;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using DataTier_Prov.Models;
 using Microsoft.EntityFrameworkCore;
+using ProveedorApp.Persistance;
 
-namespace ProveedorApp.Business;
+namespace DataTier_Prov.Repositories;
 
-public class ProductoBusiness : IProductoBusiness
+public class ProductoRepository : IProductoRepository
 {
+
     private readonly MyAppDbContext _context;
 
-    //Paso principal para inyección de dependnecias
-    public ProductoBusiness(MyAppDbContext context)
+    public ProductoRepository(MyAppDbContext context)
     {
         _context = context;
     }
 
-
     public async Task CreateProducto(Producto producto)
     {
-        await _context.Productos.AddAsync(producto);
+        _context.Productos.Add(producto);
         await _context.SaveChangesAsync();
     }
 
@@ -31,7 +28,7 @@ public class ProductoBusiness : IProductoBusiness
 
     public async Task<Producto?> GetProductoById(int id)
     {
-        return await _context.Productos.FindAsync(id);
+        return await _context.Productos.FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task UpdateProducto(Producto producto)
@@ -42,10 +39,10 @@ public class ProductoBusiness : IProductoBusiness
 
     public async Task DeleteProducto(int id)
     {
-        var producto = await _context.Productos.FindAsync(id);
-        if (producto != null)
+        var p = await GetProductoById(id);
+        if (p != null)
         {
-            _context.Productos.Remove(producto);
+            _context.Productos.Remove(p);
             await _context.SaveChangesAsync();
         }
     }

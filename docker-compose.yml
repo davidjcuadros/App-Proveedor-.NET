@@ -3,7 +3,7 @@ version: '3.9'
 services:
   postgres-db:
     image: postgres:16
-    container_name: postgres-db2
+    container_name: postgres-db
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
@@ -14,30 +14,35 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - dotnet-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d TestDb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-  dotnet-app:
-    build: .
-    container_name: dotnet-app
+  datatier:
+    build:
+      context: .
+      dockerfile: ./DataTier_Prov/Dockerfile
+    container_name: datatier
     ports:
       - "8080:8080"
     depends_on:
-      postgres-db:
-        condition: service_healthy
+      - postgres-db
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=TestDb;Username=admin;Password=admin123
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=productos_db;Username=admin;Password=admin123
+    networks:
+      - dotnet-network
+
+  businesstier:
+    build:
+      context: .
+      dockerfile: ./BussinessTier_Prov/Dockerfile
+    container_name: businesstier
+    ports:
+      - "8081:8081"
+    depends_on:
+      - datatier
+    environment:
+      - DataTierUrl=http://datatier:8080
     networks:
       - dotnet-network
 
 networks:
   dotnet-network:
     driver: bridge
-
-volumes:
-  postgres_data:

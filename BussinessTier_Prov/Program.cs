@@ -1,5 +1,8 @@
 
 namespace BussinessTier_Prov;
+
+using BussinessTier_Prov.Business;
+using BussinessTier_Prov.IBusiness;
 using Grpc.Net.ClientFactory;
 
 
@@ -18,6 +21,15 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        var dataTierUrl = builder.Configuration["DataTierUrl"];
+        
+        builder.Services.AddScoped<IProductoBusiness, ProductoBusiness>();
+
+        builder.Services.AddGrpcClient<ProductosService.ProductosServiceClient>(o =>
+        {
+            o.Address = new Uri(dataTierUrl);
+        });
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -26,10 +38,8 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        builder.Services.AddGrpcClient<ProductosService.ProductosServiceClient>(o =>
-        {
-            o.Address = new Uri("https://localhost:5056");
-        });
+        
+
 
 
         app.UseHttpsRedirection();
