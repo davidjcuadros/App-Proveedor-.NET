@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ProveedorApp.Business;
 using ProveedorApp.IBusiness;
 using ProveedorApp.Persistance;
+using Confluent.Kafka;
 
 namespace ProveedorApp;
 
@@ -18,6 +19,7 @@ public class Program
         );
 
         builder.Services.AddScoped<IProductoBusiness, ProductoBusiness>();
+        builder.Services.AddScoped<IKafkaProducer, KafkaProducer>();
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
