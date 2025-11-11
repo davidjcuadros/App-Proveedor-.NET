@@ -1,20 +1,22 @@
-# Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
+COPY ProveedorApp.sln ./
 COPY BussinessTier_Prov/BussinessTier_Prov.csproj BussinessTier_Prov/
+COPY DataTier_Prov/DataTier_Prov.csproj DataTier_Prov/
+
 RUN dotnet restore BussinessTier_Prov/BussinessTier_Prov.csproj
 
 COPY . .
-WORKDIR /src/BussinessTier_Prov
-RUN dotnet publish -c Release -o /app/out
 
-# Runtime
+RUN dotnet publish BussinessTier_Prov/BussinessTier_Prov.csproj -c Release -o /app/out
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+
 COPY --from=build /app/out .
 
-ENV ASPNETCORE_URLS=http://+:8081
+ENV ASPNETCORE_URLS=http://+:8080
 
-EXPOSE 8081
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "BussinessTier_Prov.dll"]

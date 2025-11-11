@@ -9,15 +9,20 @@
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 
-    <!-- gRPC CLIENT (BusinessTier solo consume) -->
+    <!-- gRPC Client -->
     <PackageReference Include="Grpc.Net.Client" Version="2.71.0" />
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     <PackageReference Include="Google.Protobuf" Version="3.33.0" />
+
+    <!-- Para generar clases cliente desde el .proto -->
+    <PackageReference Include="Grpc.Tools" Version="2.76.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <!-- BusinessTier usa las clases generadas por DataTier -->
-    <ProjectReference Include="..\DataTier_Prov\DataTier_Prov.csproj" />
+    <!-- BusinessTier genera sus propias clases gRPC CLIENT -->
+    <Protobuf Include="Protos\producto.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

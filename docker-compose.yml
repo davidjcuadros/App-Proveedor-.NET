@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -44,20 +42,49 @@ services:
     networks:
       - dotnet-network
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d productos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   datatier:
     build:
       context: .
       dockerfile: ./DataTier_Prov/Dockerfile
     container_name: datatier
     ports:
-      - "8081:8080"
+      - "8080:8080" # gRPC HTTP/2
+
     depends_on:
       postgres-db:
         condition: service_healthy
       kafka:
         condition: service_started
+
     environment:
-      - DataTierUrl=http://datatier:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=productos_db;Username=admin;Password=admin123
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__Topic=productos-topic
+
+    networks:
+      - dotnet-network
+
+  businesstier:
+    build:
+      context: .
+      dockerfile: ./BussinessTier_Prov/Dockerfile
+    container_name: businesstier
+    ports:
+      - "8081:8080" # API REST HTTP/1.1
+    depends_on:
+      datatier:
+        condition: service_started
+
+    environment:
+      - Services__DataTierUrl=http://datatier:8080
+
     networks:
       - dotnet-network
 
