@@ -20,6 +20,8 @@ public class Program
 
         builder.Services.AddScoped<IProductoBusiness, ProductoBusiness>();
         builder.Services.AddScoped<IKafkaProducer, KafkaProducer>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddHostedService<KafkaConsumer>();
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
