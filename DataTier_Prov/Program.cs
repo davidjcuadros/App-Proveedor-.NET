@@ -1,37 +1,46 @@
-
+using Microsoft.EntityFrameworkCore;
+using DataTier_Prov.Persistance;
 using DataTier_Prov.Repositories;
 using DataTier_Prov.Services;
-using Microsoft.EntityFrameworkCore;
-using ProveedorApp.Persistance;
 
-namespace DataTier_Prov;
-
-public class Program
+namespace DataTier_Prov
 {
-    public static void Main(string[] args)
+    public class Program
     {
-        var builder = WebApplication.CreateBuilder(args);
-        
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddDbContextFactory<MyAppDbContext>(
-            options => options.UseNpgsql(connectionString)
-        );
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-        // 2) registrar repos
-        builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
+            // Registrar EF Core
+            builder.Services.AddDbContextFactory<MyAppDbContext>(
+                options => options.UseNpgsql(connectionString)
+            );
 
-        // 3) registrar gRPC SERVER
-        builder.Services.AddGrpc();
+            // Registrar Repos y Kafka
+            builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
+            builder.Services.AddScoped<IKafkaProducer, KafkaProducer>();
 
-        var app = builder.Build();
+            // Registrar gRPC Server
+            builder.Services.AddGrpc();
 
-        // 4) mapear tu servicio grpc (el real, NO el greeter)
-        app.MapGrpcService<ProductosServiceGrpcImpl>(); // <- esta clase todavía no la has creado
+            var app = builder.Build();
 
-        // opcional
-        app.MapGet("/", () => "Servidor GRPC arriba. Este endpoint no acepta REST.");
+            // Migraciones automáticas
+            using (var scope = app.Services.CreateScope())
+            {
+                var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<MyAppDbContext>>();
+                using var db = factory.CreateDbContext();
+                db.Database.Migrate();
+            }
 
-        app.Run();
+            // Exponer gRPC
+            app.MapGrpcService<ProductosServiceGrpcImpl>();
+
+            app.MapGet("/", () => "DataTier_Prov gRPC server running.");
+
+            app.Run();
+        }
     }
 }

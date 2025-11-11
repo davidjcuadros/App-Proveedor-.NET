@@ -2,38 +2,42 @@ using System;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
-using ProveedorApp.IBusiness;
 
-namespace ProveedorApp.Business;
-
-public class KafkaProducer : IKafkaProducer
+namespace DataTier_Prov.Repositories
 {
-    private readonly IConfiguration _configuration;
-    private readonly IProducer<Null, string> _producer;
-
-    public KafkaProducer(IConfiguration configuration)
+    public class KafkaProducer : IKafkaProducer
     {
-        _configuration = configuration;
+        private readonly IConfiguration _configuration;
+        private readonly IProducer<Null, string> _producer;
 
-        var config = new ProducerConfig
+        public KafkaProducer(IConfiguration configuration)
         {
-            BootstrapServers = _configuration["Kafka:BootstrapServers"]
-        };
+            _configuration = configuration;
 
-        _producer = new ProducerBuilder<Null, string>(config).Build();
-    }
+            var config = new ProducerConfig
+            {
+                BootstrapServers = _configuration["Kafka:BootstrapServers"]
+            };
 
-    public async Task ProduceAsync(string topic, string message)
-    {
-        try
-        {
-            var deliveryResult = await _producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
-            Console.WriteLine($"Mensaje enviado a {deliveryResult.TopicPartitionOffset}");
+            _producer = new ProducerBuilder<Null, string>(config).Build();
         }
-        catch (ProduceException<Null, string> e)
+
+        public async Task ProduceAsync(string topic, string message)
         {
-            Console.WriteLine($"Error al enviar mensaje: {e.Error.Reason}");
-            throw;
+            try
+            {
+                var result = await _producer.ProduceAsync(
+                    topic, 
+                    new Message<Null, string> { Value = message }
+                );
+
+                Console.WriteLine($"Mensaje enviado a {result.TopicPartitionOffset}");
+            }
+            catch (ProduceException<Null, string> ex)
+            {
+                Console.WriteLine($"Error enviando mensaje: {ex.Error.Reason}");
+                throw;
+            }
         }
     }
 }

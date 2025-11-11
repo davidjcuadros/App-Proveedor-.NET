@@ -1,12 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using DataTier_Prov.Models;
-using ProveedorApp.Persistance;
-using ProveedorApp.IBusiness;
+using DataTier_Prov.Persistance;
 
 namespace DataTier_Prov.Repositories
 {
@@ -16,7 +15,6 @@ namespace DataTier_Prov.Repositories
         private readonly IKafkaProducer _kafkaProducer;
         private readonly IConfiguration _configuration;
 
-        // Constructor con inyección de dependencias
         public ProductoRepository(MyAppDbContext context, IKafkaProducer kafkaProducer, IConfiguration configuration)
         {
             _context = context;
@@ -24,12 +22,17 @@ namespace DataTier_Prov.Repositories
             _configuration = configuration;
         }
 
+        private string GetKafkaTopic()
+        {
+            // Evita warning CS8604
+            return _configuration["Kafka:Topic"] ?? "productos-default";
+        }
+
         public async Task CreateProducto(Producto producto)
         {
             _context.Productos.Add(producto);
             await _context.SaveChangesAsync();
 
-            // Evento Kafka
             var message = JsonSerializer.Serialize(new
             {
                 Action = "Created",
@@ -37,8 +40,7 @@ namespace DataTier_Prov.Repositories
                 Timestamp = DateTime.UtcNow
             });
 
-            var topic = _configuration["Kafka:Topic"];
-            await _kafkaProducer.ProduceAsync(topic, message);
+            await _kafkaProducer.ProduceAsync(GetKafkaTopic(), message);
         }
 
         public async Task<List<Producto>> GetAllProductos()
@@ -56,7 +58,6 @@ namespace DataTier_Prov.Repositories
             _context.Productos.Update(producto);
             await _context.SaveChangesAsync();
 
-            // Evento Kafka
             var message = JsonSerializer.Serialize(new
             {
                 Action = "Updated",
@@ -64,8 +65,7 @@ namespace DataTier_Prov.Repositories
                 Timestamp = DateTime.UtcNow
             });
 
-            var topic = _configuration["Kafka:Topic"];
-            await _kafkaProducer.ProduceAsync(topic, message);
+            await _kafkaProducer.ProduceAsync(GetKafkaTopic(), message);
         }
 
         public async Task DeleteProducto(int id)
@@ -77,7 +77,6 @@ namespace DataTier_Prov.Repositories
                 _context.Productos.Remove(producto);
                 await _context.SaveChangesAsync();
 
-                // Evento Kafka
                 var message = JsonSerializer.Serialize(new
                 {
                     Action = "Deleted",
@@ -85,8 +84,7 @@ namespace DataTier_Prov.Repositories
                     Timestamp = DateTime.UtcNow
                 });
 
-                var topic = _configuration["Kafka:Topic"];
-                await _kafkaProducer.ProduceAsync(topic, message);
+                await _kafkaProducer.ProduceAsync(GetKafkaTopic(), message);
             }
         }
     }

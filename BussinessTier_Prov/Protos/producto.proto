@@ -10,8 +10,6 @@ message Producto {
     int32 cantidad = 4;
 }
 
-
-
 message CreateProductoRequest {
     Producto producto = 1;
 }

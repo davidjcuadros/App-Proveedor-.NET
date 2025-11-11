@@ -1,54 +1,61 @@
-
-namespace BussinessTier_Prov;
-
 using BussinessTier_Prov.Business;
 using BussinessTier_Prov.IBusiness;
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 using Grpc.Net.ClientFactory;
-
-
 using Productos;
 
-public class Program
+namespace BussinessTier_Prov
 {
-    public static void Main(string[] args)
+    public class Program
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        // Add services to the container.
-
-        builder.Services.AddControllers();
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
-
-        var dataTierUrl = builder.Configuration["DataTierUrl"];
-        
-        builder.Services.AddScoped<IProductoBusiness, ProductoBusiness>();
-
-        builder.Services.AddGrpcClient<ProductosService.ProductosServiceClient>(o =>
+        public static void Main(string[] args)
         {
-            o.Address = new Uri(dataTierUrl);
-        });
+            var builder = WebApplication.CreateBuilder(args);
 
-        var app = builder.Build();
+            // ============================================
+            // API REST
+            // ============================================
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            // ============================================
+            // Capa de negocio
+            // ============================================
+            builder.Services.AddScoped<IProductoBusiness, ProductoBusiness>();
+
+            // ============================================
+            // VALIDAR URL DEL DATATIER 
+            // ============================================
+            var dataTierUrl = builder.Configuration["Services:DataTierUrl"]
+                ?? throw new InvalidOperationException(
+                    "La URL del DataTier no está configurada en appsettings.json (clave: Services:DataTierUrl)."
+                );
+
+            // ============================================
+            // Cliente gRPC → DataTier
+            // ============================================
+            builder.Services.AddGrpcClient<ProductosService.ProductosServiceClient>(o =>
+            {
+                o.Address = new Uri(dataTierUrl);
+            });
+
+            var app = builder.Build();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseAuthorization();
+            app.MapControllers();
+
+            app.Run();
         }
-        
-
-
-
-        app.UseHttpsRedirection();
-
-        app.UseAuthorization();
-
-
-        app.MapControllers();
-
-        app.Run();
     }
 }
