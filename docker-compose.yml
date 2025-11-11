@@ -1,6 +1,35 @@
-version: '3.9'
+version: "3.9"
 
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - dotnet-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - dotnet-network
+
   postgres-db:
     image: postgres:16
     container_name: postgres-db
@@ -21,23 +50,12 @@ services:
       dockerfile: ./DataTier_Prov/Dockerfile
     container_name: datatier
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
-      - postgres-db
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=productos_db;Username=admin;Password=admin123
-    networks:
-      - dotnet-network
-
-  businesstier:
-    build:
-      context: .
-      dockerfile: ./BussinessTier_Prov/Dockerfile
-    container_name: businesstier
-    ports:
-      - "8081:8081"
-    depends_on:
-      - datatier
+      postgres-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
       - DataTierUrl=http://datatier:8080
     networks:
