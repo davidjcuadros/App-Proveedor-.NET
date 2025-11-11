@@ -8,6 +8,7 @@ message Producto {
     string nombre = 2;
     string descripcion = 3;
     int32 cantidad = 4;
+    string correo = 5;
 }
 
 message CreateProductoRequest {

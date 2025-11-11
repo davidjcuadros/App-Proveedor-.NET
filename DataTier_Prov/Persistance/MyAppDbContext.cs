@@ -20,6 +20,8 @@ namespace DataTier_Prov.Persistance
                 entity.Property(e => e.Nombre).HasColumnName("nombre");
                 entity.Property(e => e.Descripcion).HasColumnName("descripcion");
                 entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+                entity.Property(e => e.Correo).HasColumnName("correo");
+
             });
         }
     }

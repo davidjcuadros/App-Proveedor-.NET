@@ -23,7 +23,8 @@ namespace BussinessTier_Prov.Business
                     Id = producto.Id,
                     Nombre = producto.Nombre,
                     Descripcion = producto.Descripcion,
-                    Cantidad = producto.Cantidad
+                    Cantidad = producto.Cantidad,
+                    Correo = producto.Correo
                 }
             };
 
@@ -39,7 +40,8 @@ namespace BussinessTier_Prov.Business
                 Id = p.Id,
                 Nombre = p.Nombre,
                 Descripcion = p.Descripcion,
-                Cantidad = p.Cantidad
+                Cantidad = p.Cantidad,
+                Correo = p.Correo
             }).ToList();
         }
 
@@ -55,7 +57,8 @@ namespace BussinessTier_Prov.Business
                 Id = response.Producto.Id,
                 Nombre = response.Producto.Nombre,
                 Descripcion = response.Producto.Descripcion,
-                Cantidad = response.Producto.Cantidad
+                Cantidad = response.Producto.Cantidad,
+                Correo = response.Producto.Correo
             };
         }
 
@@ -68,7 +71,8 @@ namespace BussinessTier_Prov.Business
                     Id = producto.Id,
                     Nombre = producto.Nombre,
                     Descripcion = producto.Descripcion,
-                    Cantidad = producto.Cantidad
+                    Cantidad = producto.Cantidad,
+                    Correo = producto.Correo
                 }
             };
 

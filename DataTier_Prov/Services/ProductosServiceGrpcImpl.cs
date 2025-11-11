@@ -24,7 +24,8 @@ namespace DataTier_Prov.Services
                 Id = request.Producto.Id,
                 Nombre = request.Producto.Nombre,
                 Descripcion = request.Producto.Descripcion,
-                Cantidad = request.Producto.Cantidad
+                Cantidad = request.Producto.Cantidad,
+                Correo = request.Producto.Correo
             };
 
             await _repository.CreateProducto(producto);
@@ -42,7 +43,8 @@ namespace DataTier_Prov.Services
                 Id = p.Id,
                 Nombre = p.Nombre,
                 Descripcion = p.Descripcion,
-                Cantidad = p.Cantidad
+                Cantidad = p.Cantidad,
+                Correo = p.Correo
             }));
 
             return resp;
@@ -61,7 +63,8 @@ namespace DataTier_Prov.Services
                     Id = p.Id,
                     Nombre = p.Nombre,
                     Descripcion = p.Descripcion,
-                    Cantidad = p.Cantidad
+                    Cantidad = p.Cantidad,
+                    Correo = p.Correo
                 };
             }
 
@@ -75,7 +78,8 @@ namespace DataTier_Prov.Services
                 Id = request.Producto.Id,
                 Nombre = request.Producto.Nombre,
                 Descripcion = request.Producto.Descripcion,
-                Cantidad = request.Producto.Cantidad
+                Cantidad = request.Producto.Cantidad,
+                Correo = request.Producto.Correo
             };
 
             await _repository.UpdateProducto(producto);

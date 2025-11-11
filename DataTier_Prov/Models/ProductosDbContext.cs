@@ -30,6 +30,7 @@ public partial class ProductosDbContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+            entity.Property(e => e.Correo).HasColumnName("correo");
             entity.Property(e => e.Descripcion).HasColumnName("descripcion");
             entity.Property(e => e.Nombre)
                 .HasMaxLength(100)

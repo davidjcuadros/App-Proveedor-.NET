@@ -12,4 +12,8 @@ public partial class Producto
     public string? Descripcion { get; set; }
 
     public int Cantidad { get; set; }
+
+    public string? Correo { get; set; }
+
+
 }

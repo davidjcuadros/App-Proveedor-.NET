@@ -11,5 +11,7 @@ namespace BussinessTier_Prov.Models
         public string Descripcion { get; set; } = string.Empty;
 
         public int Cantidad { get; set; }
+
+        public string Correo { get; set; } = string.Empty;
     }
 }
