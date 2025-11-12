@@ -137,7 +137,6 @@ namespace DataTier_Prov.Services
             return new DeleteProductoResponse { Respuesta = "Producto eliminado" };
         }
 
-        // --- MÉTODO AUXILIAR ---
         private async Task EnviarMensajeKafka(object emailData)
         {
             var topic = _configuration["Kafka:Topic"];

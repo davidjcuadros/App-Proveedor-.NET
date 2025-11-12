@@ -12,25 +12,31 @@ namespace DataTier_Prov
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Configuration.AddEnvironmentVariables();
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-            // Registrar EF Core
             builder.Services.AddDbContextFactory<MyAppDbContext>(
                 options => options.UseNpgsql(connectionString)
             );
 
-            // Registrar Repos y Kafka
+            // Registrar repositorios, servicios y Kafka producer/consumer
             builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
             builder.Services.AddScoped<IKafkaProducer, KafkaProducer>();
-            builder.Services.AddHostedService<KafkaConsumer>();
-            builder.Services.AddSingleton<EmailService>();
 
-            // Registrar gRPC Server
+            // Email y Kafka consumer 
+            builder.Services.AddSingleton<EmailService>();
+            builder.Services.AddHostedService<KafkaConsumer>();
+
             builder.Services.AddGrpc();
+
+            builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
             var app = builder.Build();
 
-            // Migraciones automáticas
             using (var scope = app.Services.CreateScope())
             {
                 var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<MyAppDbContext>>();
@@ -38,10 +44,9 @@ namespace DataTier_Prov
                 db.Database.Migrate();
             }
 
-            // Exponer gRPC
             app.MapGrpcService<ProductosServiceGrpcImpl>();
 
-            app.MapGet("/", () => "DataTier_Prov gRPC server running.");
+            app.MapGet("/", () => "✅ DataTier_Prov gRPC server running with Kafka & Email integration.");
 
             app.Run();
         }

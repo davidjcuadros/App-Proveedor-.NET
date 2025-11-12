@@ -1,4 +1,5 @@
 services:
+  # ZOOKEEPER
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: zookeeper
@@ -7,9 +8,13 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_datalog:/var/lib/zookeeper/log
     networks:
       - dotnet-network
 
+  # KAFKA
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
@@ -18,16 +23,44 @@ services:
     ports:
       - "9092:9092"
     environment:
+      # Broker
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      # Listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+    # Crear topic al iniciar
+    command: >
+      bash -c "
+        /etc/confluent/docker/run &
+        sleep 10 &&
+        kafka-topics --create --if-not-exists --topic productos-topic --bootstrap-server kafka:29092 --replication-factor 1 --partitions 1 &&
+        wait
+      "
+
+    healthcheck:
+      test:
+        ["CMD", "kafka-topics", "--bootstrap-server", "kafka:29092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 8
+      start_period: 25s
+
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     networks:
       - dotnet-network
 
+  # POSTGRES
   postgres-db:
     image: postgres:16
     container_name: postgres-db
@@ -39,55 +72,114 @@ services:
       - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - dotnet-network
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d productos_db"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - dotnet-network
 
+  # 🧱 DATA TIER (.NET gRPC)
   datatier:
     build:
       context: .
       dockerfile: ./DataTier_Prov/Dockerfile
     container_name: datatier
     ports:
-      - "8080:8080" # gRPC HTTP/2
-
+      - "8080:8080"
     depends_on:
       postgres-db:
         condition: service_healthy
       kafka:
-        condition: service_started
-
+        condition: service_healthy
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=productos_db;Username=admin;Password=admin123
-      - Kafka__BootstrapServers=kafka:29092
-      - Kafka__Topic=productos-topic
+      ASPNETCORE_URLS: http://0.0.0.0:8080
 
+      # Base de datos
+      ConnectionStrings__DefaultConnection: Host=postgres-db;Port=5432;Database=productos_db;Username=admin;Password=admin123
+
+      # Kafka
+      Kafka__BootstrapServers: kafka:29092
+      Kafka__Topic: productos-topic
+
+      # SMTP Gmail
+      Email__SmtpServer: smtp.gmail.com
+      Email__SmtpPort: "587"
+      Email__Username: javemarketenterprise3@gmail.com
+      Email__Password: gehsjcyszehnnfhx
+      Email__FromAddress: javemarketenterprise3@gmail.com
+      Email__FromName: Proveedor App
+      Email__NotificationTo: javemarketenterprise3@gmail.com
+
+    # Healthcheck (HTTP simple; aumenta tiempos para evitar falsos OK)
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+    restart: on-failure
     networks:
       - dotnet-network
 
+  # 💼 BUSINESS TIER (.NET API REST)
   businesstier:
     build:
       context: .
       dockerfile: ./BussinessTier_Prov/Dockerfile
     container_name: businesstier
     ports:
-      - "8081:8080" # API REST HTTP/1.1
+      - "8081:8080"
     depends_on:
       datatier:
         condition: service_started
-
     environment:
-      - Services__DataTierUrl=http://datatier:8080
-
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Services__DataTierUrl: http://datatier:8080
+    command: >
+      bash -c "
+        echo '⏳ Waiting for DataTier gRPC at datatier:8080...' ;
+        for i in {1..90}; do
+          (echo > /dev/tcp/datatier/8080) >/dev/null 2>&1 && echo '✅ DataTier port is open' && break;
+          echo '...retrying'; sleep 2;
+        done ;
+        exec dotnet BussinessTier_Prov.dll
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: on-failure
     networks:
       - dotnet-network
 
+  # KAFKA UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8083:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - dotnet-network
+
+# 🌐 NETWORK
 networks:
   dotnet-network:
     driver: bridge
+
+# 💾 VOLUMES
+volumes:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_datalog:

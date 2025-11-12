@@ -24,7 +24,6 @@ namespace DataTier_Prov.Repositories
 
         private string GetKafkaTopic()
         {
-            // Evita warning CS8604
             return _configuration["Kafka:Topic"] ?? "productos-default";
         }
 
@@ -33,10 +32,17 @@ namespace DataTier_Prov.Repositories
             _context.Productos.Add(producto);
             await _context.SaveChangesAsync();
 
+            // Kafka: enviar mensaje con formato de correo
             var message = JsonSerializer.Serialize(new
             {
-                Action = "Created",
-                Producto = producto,
+                To = producto.Correo ?? _configuration["Email:NotificationTo"],
+                Subject = $"🆕 Nuevo producto registrado: {producto.Nombre}",
+                Body = $@"
+                    <h3>Se ha registrado un nuevo producto</h3>
+                    <p><strong>Nombre:</strong> {producto.Nombre}</p>
+                    <p><strong>Descripción:</strong> {producto.Descripcion}</p>
+                    <p><strong>Cantidad:</strong> {producto.Cantidad}</p>
+                    <p>Fecha de registro: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}</p>",
                 Timestamp = DateTime.UtcNow
             });
 
@@ -60,8 +66,14 @@ namespace DataTier_Prov.Repositories
 
             var message = JsonSerializer.Serialize(new
             {
-                Action = "Updated",
-                Producto = producto,
+                To = producto.Correo ?? _configuration["Email:NotificationTo"],
+                Subject = $"✏️ Producto actualizado: {producto.Nombre}",
+                Body = $@"
+                    <h3>Se ha actualizado un producto existente</h3>
+                    <p><strong>Nombre:</strong> {producto.Nombre}</p>
+                    <p><strong>Descripción:</strong> {producto.Descripcion}</p>
+                    <p><strong>Cantidad actualizada:</strong> {producto.Cantidad}</p>
+                    <p>Fecha de actualización: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}</p>",
                 Timestamp = DateTime.UtcNow
             });
 
@@ -79,8 +91,14 @@ namespace DataTier_Prov.Repositories
 
                 var message = JsonSerializer.Serialize(new
                 {
-                    Action = "Deleted",
-                    ProductoId = id,
+                    To = producto.Correo ?? _configuration["Email:NotificationTo"],
+                    Subject = $"🗑️ Producto eliminado: {producto.Nombre}",
+                    Body = $@"
+                        <h3>Un producto ha sido eliminado del inventario</h3>
+                        <p><strong>Nombre:</strong> {producto.Nombre}</p>
+                        <p><strong>Descripción:</strong> {producto.Descripcion}</p>
+                        <p><strong>Cantidad eliminada:</strong> {producto.Cantidad}</p>
+                        <p>Fecha de eliminación: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}</p>",
                     Timestamp = DateTime.UtcNow
                 });
 
