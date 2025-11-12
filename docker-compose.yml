@@ -173,12 +173,10 @@ services:
     networks:
       - dotnet-network
 
-# 🌐 NETWORK
 networks:
   dotnet-network:
     driver: bridge
 
-# 💾 VOLUMES
 volumes:
   kafka_data:
   zookeeper_data:
