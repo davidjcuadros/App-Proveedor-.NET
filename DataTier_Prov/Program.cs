@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using DataTier_Prov.Persistance;
 using DataTier_Prov.Repositories;
 using DataTier_Prov.Services;
+using DataTier_Prov.Mail;
 
 namespace DataTier_Prov
 {
@@ -21,6 +22,8 @@ namespace DataTier_Prov
             // Registrar Repos y Kafka
             builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
             builder.Services.AddScoped<IKafkaProducer, KafkaProducer>();
+            builder.Services.AddHostedService<KafkaConsumer>();
+            builder.Services.AddSingleton<EmailService>();
 
             // Registrar gRPC Server
             builder.Services.AddGrpc();
