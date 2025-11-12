@@ -16,6 +16,14 @@ dotnet build
 docker-compose up --build
 ```
 
+## Tenga en cuenta
+
+Que si dejo de ejecutar el docker compose, tiene que realizar la siguiente acción
+
+```env
+docker-compose down -v
+```
+
 ## ENDPOINTS DE PRUEBA
 
 POST:
@@ -28,7 +36,7 @@ JSON Ejemplo:
         "nombre": "Zapatos",
         "descripcion": "Nike",
         "cantidad": 10,
-        "correo": "cuadrosdavid01@gmail.com"
+        "correo": "cbustaca@javeriana.edu.co"
 }
 ```
 
